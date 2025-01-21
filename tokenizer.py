@@ -19,18 +19,3 @@ def tokenize(pseudocode):
             if not match:  # If no token matches
                 raise SyntaxError(f"Unknown token at line {lineNumber}, position {position}: {line[position]}")
     return tokens
-
-
-pseudocode = """
-x <- 5
-IF x > 0 THEN
-    PRINT "Positive"
-ENDIF
-"""
-
-try:
-    tokens = tokenize(pseudocode)
-    for token in tokens:
-        print(token)
-except SyntaxError as e:
-    print(f"Error: {e}")
