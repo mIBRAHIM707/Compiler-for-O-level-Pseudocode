@@ -4,10 +4,16 @@ class Program:
     def __init__(self, statements):
         self.statements = statements
 
+    def __repr__(self):
+        return f"Program({self.statements})"
+
 class Assignment:
     def __init__(self, identifier, expression):
         self.identifier = identifier
         self.expression = expression
+
+    def __repr__(self):
+        return f"Assignment({self.identifier} <- {self.expression})"
 
 class Conditional:
     def __init__(self, condition, true_branch, false_branch=None):
@@ -15,12 +21,18 @@ class Conditional:
         self.true_branch = true_branch
         self.false_branch = false_branch
 
+    def __repr__(self):
+        return f"Conditional(IF {self.condition} THEN {self.true_branch} ELSE {self.false_branch})"
+
 class Loop:
     def __init__(self, identifier, start, end, body):
         self.identifier = identifier
         self.start = start
         self.end = end
         self.body = body
+
+    def __repr__(self):
+        return f"Loop(FOR {self.identifier} <- {self.start} TO {self.end} DO {self.body})"
 
 class PrintStatement:
     def __init__(self, expression):
@@ -53,6 +65,14 @@ class ProcedureDefinition:
     def __repr__(self):
         return f"Procedure(name={self.name}, params={self.params}, body={self.body})"
 
+class IdentifierStatement:
+    def __init__(self, identifier):
+        self.identifier = identifier
+
+    def __repr__(self):
+        return f"IdentifierStatement(identifier={self.identifier})"
+
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -77,8 +97,18 @@ class Parser:
 
     def parse_statement(self):
         token = self.current_token()
-        if token[0] == "IDENTIFIER" and self.lookahead(1)[0] == "ASSIGN_OP":
-            return self.parse_assignment()
+        print(f"Parsing statement: {token}")  # Debugging print
+
+        if token[0] == "IDENTIFIER":
+            # Handle assignment or standalone identifiers
+            if self.lookahead(1) and self.lookahead(1)[0] == "ASSIGN_OP":
+                return self.parse_assignment()
+            else:
+                # Treat standalone identifiers as valid statements
+                identifier = token[1]
+                self.match("IDENTIFIER")  # Consume the identifier
+                print(f"Standalone identifier encountered: {identifier}")  # Debugging print
+                return IdentifierStatement(identifier)
         elif token[0] == "KEYWORD":
             if token[1] == "IF":
                 return self.parse_conditional()
@@ -98,7 +128,6 @@ class Parser:
                 return self.parse_return()
         raise SyntaxError(f"Unexpected token: {token}")
 
-
     def parse_assignment(self):
         identifier = self.current_token()[1]
         self.match("IDENTIFIER")
@@ -110,26 +139,42 @@ class Parser:
         self.match("KEYWORD")  # IF
         condition = self.parse_expression()  # Expression may contain a REL_OP
         self.match("KEYWORD")  # THEN
-        true_branch = self.parse_program()
+
+        # Parse the true branch until ELSE or ENDIF
+        true_branch = []
+        while self.current_token() and self.current_token()[1] not in ("ELSE", "ENDIF"):
+            true_branch.append(self.parse_statement())
+
         false_branch = None
         if self.current_token() and self.current_token()[1] == "ELSE":
             self.match("KEYWORD")  # ELSE
-            false_branch = self.parse_program()
+            # Parse the false branch until ENDIF
+            false_branch = []
+            while self.current_token() and self.current_token()[1] != "ENDIF":
+                false_branch.append(self.parse_statement())
+
         self.match("KEYWORD")  # ENDIF
         return Conditional(condition, true_branch, false_branch)
+
 
     def parse_loop(self):
         self.match("KEYWORD")  # FOR
         identifier = self.current_token()[1]
+        print(f"Parsing loop with identifier: {identifier}")  # Debugging print
         self.match("IDENTIFIER")
         self.match("ASSIGN_OP")
         start = self.parse_expression()
         self.match("KEYWORD")  # TO
         end = self.parse_expression()
         self.match("KEYWORD")  # DO
-        body = self.parse_program()
+        body = self.parse_program()  # Parse loop body
+        print(f"Loop body parsed: {body}")  # Debugging print
+
+        # Ensure that ENDFOR is expected after the loop body
         self.match("KEYWORD")  # ENDFOR
+
         return Loop(identifier, start, end, body)
+
 
     def parse_expression(self):
         left = self.parse_term()
@@ -201,17 +246,17 @@ class Parser:
 
 # Example token list
 tokens = [
-    ("IDENTIFIER", "x"),       # Assignment statement
-    ("ASSIGN_OP", "<-"),       
-    ("NUMBER", "5"),           
-    ("KEYWORD", "IF"),         # Conditional statement
-    ("IDENTIFIER", "x"),       
-    ("REL_OP", ">"),           
-    ("NUMBER", "0"),           
-    ("KEYWORD", "THEN"),
-    ("KEYWORD", "PRINT"),
-    ("STRING", "\"Positive\""),
-    ("KEYWORD", "ENDIF"),
+    # ("IDENTIFIER", "x"),       # Assignment statement
+    # ("ASSIGN_OP", "<-"),       
+    # ("NUMBER", "5"),           
+    # ("KEYWORD", "IF"),         # Conditional statement
+    # ("IDENTIFIER", "x"),       
+    # ("REL_OP", ">"),           
+    # ("NUMBER", "0"),           
+    # ("KEYWORD", "THEN"),
+    # ("KEYWORD", "PRINT"),
+    # ("STRING", "\"Positive\""),
+    # ("KEYWORD", "ENDIF"),
     ("KEYWORD", "FOR"),        # Loop statement
     ("IDENTIFIER", "i"),       
     ("ASSIGN_OP", "<-"),       
