@@ -29,6 +29,30 @@ class PrintStatement:
     def __repr__(self):
         return f"Print({self.expression})"
 
+class ReturnStatement:
+    def __init__(self, expression):
+        self.expression = expression
+
+    def __repr__(self):
+        return f"Return({self.expression})"
+
+class CallStatement:
+    def __init__(self, procedure_name, args):
+        self.procedure_name = procedure_name
+        self.args = args
+
+    def __repr__(self):
+        return f"Call(procedure_name={self.procedure_name}, args={self.args})"
+
+class ProcedureDefinition:
+    def __init__(self, name, params, body):
+        self.name = name
+        self.params = params
+        self.body = body
+
+    def __repr__(self):
+        return f"Procedure(name={self.name}, params={self.params}, body={self.body})"
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -139,6 +163,40 @@ class Parser:
             self.match("DELIMITER")  # Match )
             return expr
         raise SyntaxError(f"Unexpected token in term: {token}")
+    
+    def parse_return(self):
+        self.match("KEYWORD")  # Match RETURN
+        expression = self.parse_expression()  # Parse the return value
+        return ReturnStatement(expression)
+    
+    def parse_call(self):
+        self.match("KEYWORD")  # Match CALL
+        procedure_name = self.current_token()[1]
+        self.match("IDENTIFIER")  # Match the procedure name
+        self.match("DELIMITER")  # Match (
+        args = []
+        while self.current_token() and self.current_token()[0] != "DELIMITER":
+            args.append(self.parse_expression())
+            if self.current_token() and self.current_token()[0] == "DELIMITER" and self.current_token()[1] == ",":
+                self.match("DELIMITER")
+        self.match("DELIMITER")  # Match )
+        return CallStatement(procedure_name, args)
+    
+    def parse_procedure(self):
+        self.match("KEYWORD")  # Match PROCEDURE
+        name = self.current_token()[1]
+        self.match("IDENTIFIER")  # Match the procedure name
+        self.match("DELIMITER")  # Match (
+        params = []
+        while self.current_token() and self.current_token()[0] == "IDENTIFIER":
+            params.append(self.current_token()[1])
+            self.match("IDENTIFIER")
+            if self.current_token() and self.current_token()[0] == "DELIMITER" and self.current_token()[1] == ",":
+                self.match("DELIMITER")
+        self.match("DELIMITER")  # Match )
+        body = self.parse_program()
+        self.match("KEYWORD")  # Match ENDPROCEDURE
+        return ProcedureDefinition(name, params, body)
 
 
 # Example token list
