@@ -22,6 +22,12 @@ class Loop:
         self.end = end
         self.body = body
 
+class PrintStatement:
+    def __init__(self, expression):
+        self.expression = expression
+
+    def __repr__(self):
+        return f"Print({self.expression})"
 
 class Parser:
     def __init__(self, tokens):
@@ -54,7 +60,20 @@ class Parser:
                 return self.parse_conditional()
             elif token[1] == "FOR":
                 return self.parse_loop()
+            elif token[1] == "WHILE":
+                return self.parse_while()
+            elif token[1] == "PRINT":
+                return self.parse_print()
+            elif token[1] == "READ":
+                return self.parse_read()
+            elif token[1] == "PROCEDURE":
+                return self.parse_procedure()
+            elif token[1] == "CALL":
+                return self.parse_call()
+            elif token[1] == "RETURN":
+                return self.parse_return()
         raise SyntaxError(f"Unexpected token: {token}")
+
 
     def parse_assignment(self):
         identifier = self.current_token()[1]
@@ -89,22 +108,13 @@ class Parser:
         return Loop(identifier, start, end, body)
 
     def parse_expression(self):
-        token = self.current_token()
-
-        # Check for a relational operator (e.g., >, <, ==)
-        if token[0] == "IDENTIFIER" or token[0] == "NUMBER":
-            left = token[1]
-            self.match(token[0])
-            token = self.current_token()
-
-            # Check for a relational operator
-            if token and token[0] == "REL_OP":
-                op = token[1]
-                self.match("REL_OP")
-                right = self.parse_expression()
-                return (left, op, right)
-
-            return left  # Return the identifier/number as an expression
+        left = self.parse_term()
+        while self.current_token() and self.current_token()[0] in ("REL_OP", "OPERATOR"):
+            operator = self.current_token()[1]
+            self.match(self.current_token()[0])  # Match operator
+            right = self.parse_term()
+            left = (operator, left, right)  # Build a binary operation tree
+        return left
 
         raise SyntaxError(f"Unexpected token in expression: {token}")
 
@@ -112,23 +122,58 @@ class Parser:
         if self.position + n < len(self.tokens):
             return self.tokens[self.position + n]
         return None
+    
+    def parse_print(self):
+        self.match("KEYWORD")  # Match PRINT
+        expression = self.parse_expression()  # Parse the expression to print
+        return PrintStatement(expression)
+    
+    def parse_term(self):
+        token = self.current_token()
+        if token[0] in ("IDENTIFIER", "NUMBER", "STRING"):
+            self.match(token[0])
+            return token[1]
+        elif token[0] == "DELIMITER" and token[1] == "(":
+            self.match("DELIMITER")  # Match (
+            expr = self.parse_expression()
+            self.match("DELIMITER")  # Match )
+            return expr
+        raise SyntaxError(f"Unexpected token in term: {token}")
 
 
-# Example usage
+# Example token list
 tokens = [
-    ("IDENTIFIER", "x"),
-    ("ASSIGN_OP", "<-"),
-    ("NUMBER", "5"),
-    ("KEYWORD", "IF"),
-    ("IDENTIFIER", "x"),
-    ("REL_OP", ">"),
-    ("NUMBER", "0"),
+    ("IDENTIFIER", "x"),       # Assignment statement
+    ("ASSIGN_OP", "<-"),       
+    ("NUMBER", "5"),           
+    ("KEYWORD", "IF"),         # Conditional statement
+    ("IDENTIFIER", "x"),       
+    ("REL_OP", ">"),           
+    ("NUMBER", "0"),           
     ("KEYWORD", "THEN"),
     ("KEYWORD", "PRINT"),
     ("STRING", "\"Positive\""),
-    ("KEYWORD", "ENDIF")
+    ("KEYWORD", "ENDIF"),
+    ("KEYWORD", "FOR"),        # Loop statement
+    ("IDENTIFIER", "i"),       
+    ("ASSIGN_OP", "<-"),       
+    ("NUMBER", "1"),
+    ("KEYWORD", "TO"),
+    ("NUMBER", "10"),
+    ("KEYWORD", "DO"),
+    ("KEYWORD", "PRINT"),
+    ("STRING", "\"i is \""),
+    ("IDENTIFIER", "i"),
+    ("KEYWORD", "ENDFOR"),
 ]
 
+# Initialize parser with the tokens
 parser = Parser(tokens)
+
+# Parse the program
 program = parser.parse_program()
-print(program)
+
+# Print the program's abstract syntax tree (AST) or statements
+print("Parsed Program:")
+for statement in program.statements:
+    print(statement)
