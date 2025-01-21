@@ -22,7 +22,7 @@ def tokenize(pseudocode):
 
 
 pseudocode = """
-x ; 5
+x <- 5
 IF x > 0 THEN
     PRINT "Positive"
 ENDIF
