@@ -82,18 +82,29 @@ class Parser:
         if self.position < len(self.tokens):
             return self.tokens[self.position]
         return None
-
-    def match(self, token_type):
-        if self.current_token() and self.current_token()[0] == token_type:
+    
+    def advance(self):
+        if self.position < len(self.tokens):
             self.position += 1
-            return True
-        return False
+
+    def match(self, expected_type):
+        if self.current_token() and self.current_token()[0] == expected_type:
+            token = self.current_token()
+            self.advance()  # Consume the token
+            return token
+        else:
+            raise SyntaxError(f"Expected {expected_type}, found {self.current_token()}")
+
 
     def parse_program(self):
         statements = []
         while self.current_token():
+            token = self.current_token()
+            if token[0] == "KEYWORD" and token[1] == "ENDPROCEDURE":
+                break  # End the procedure parsing
             statements.append(self.parse_statement())
-        return Program(statements)
+        return statements
+
 
     def parse_statement(self):
         token = self.current_token()
@@ -126,7 +137,13 @@ class Parser:
                 return self.parse_call()
             elif token[1] == "RETURN":
                 return self.parse_return()
+            elif token[1] == "ENDFOR":
+                # Simply consume the ENDFOR token and stop parsing
+                print("ENDFOR encountered. Ending loop block.")  # Debugging print
+                self.match("KEYWORD")  # Consume ENDFOR
+                return None  # No statement to return for ENDFOR
         raise SyntaxError(f"Unexpected token: {token}")
+
 
     def parse_assignment(self):
         identifier = self.current_token()[1]
@@ -156,7 +173,6 @@ class Parser:
         self.match("KEYWORD")  # ENDIF
         return Conditional(condition, true_branch, false_branch)
 
-
     def parse_loop(self):
         self.match("KEYWORD")  # FOR
         identifier = self.current_token()[1]
@@ -167,14 +183,11 @@ class Parser:
         self.match("KEYWORD")  # TO
         end = self.parse_expression()
         self.match("KEYWORD")  # DO
-        body = self.parse_program()  # Parse loop body
-        print(f"Loop body parsed: {body}")  # Debugging print
-
-        # Ensure that ENDFOR is expected after the loop body
-        self.match("KEYWORD")  # ENDFOR
-
-        return Loop(identifier, start, end, body)
-
+        body = []  # Collect statements in the loop body
+        while self.current_token()[1] != "ENDFOR":  # Stop parsing at ENDFOR
+            body.append(self.parse_statement())
+        self.match("KEYWORD")  # Consume ENDFOR
+        return Loop(identifier, start, end, Program(body))  # Return loop with body
 
     def parse_expression(self):
         left = self.parse_term()
@@ -229,54 +242,15 @@ class Parser:
     
     def parse_procedure(self):
         self.match("KEYWORD")  # Match PROCEDURE
-        name = self.current_token()[1]
-        self.match("IDENTIFIER")  # Match the procedure name
-        self.match("DELIMITER")  # Match (
-        params = []
-        while self.current_token() and self.current_token()[0] == "IDENTIFIER":
-            params.append(self.current_token()[1])
-            self.match("IDENTIFIER")
-            if self.current_token() and self.current_token()[0] == "DELIMITER" and self.current_token()[1] == ",":
-                self.match("DELIMITER")
-        self.match("DELIMITER")  # Match )
-        body = self.parse_program()
+        name = self.match("IDENTIFIER")[1]  # Match the procedure name (e.g., CalculateSum)
+        self.match("DELIMITER")  # Match '('
+        self.match("DELIMITER")  # Match ')'
+        
+        # Parse procedure parameters or just continue if none
+        self.match("KEYWORD")  # Match FOR (if applicable)
+        
+        body = self.parse_program()  # Parse the procedure body
+        
         self.match("KEYWORD")  # Match ENDPROCEDURE
-        return ProcedureDefinition(name, params, body)
-
-
-# Example token list
-tokens = [
-    # ("IDENTIFIER", "x"),       # Assignment statement
-    # ("ASSIGN_OP", "<-"),       
-    # ("NUMBER", "5"),           
-    # ("KEYWORD", "IF"),         # Conditional statement
-    # ("IDENTIFIER", "x"),       
-    # ("REL_OP", ">"),           
-    # ("NUMBER", "0"),           
-    # ("KEYWORD", "THEN"),
-    # ("KEYWORD", "PRINT"),
-    # ("STRING", "\"Positive\""),
-    # ("KEYWORD", "ENDIF"),
-    ("KEYWORD", "FOR"),        # Loop statement
-    ("IDENTIFIER", "i"),       
-    ("ASSIGN_OP", "<-"),       
-    ("NUMBER", "1"),
-    ("KEYWORD", "TO"),
-    ("NUMBER", "10"),
-    ("KEYWORD", "DO"),
-    ("KEYWORD", "PRINT"),
-    ("STRING", "\"i is \""),
-    ("IDENTIFIER", "i"),
-    ("KEYWORD", "ENDFOR"),
-]
-
-# Initialize parser with the tokens
-parser = Parser(tokens)
-
-# Parse the program
-program = parser.parse_program()
-
-# Print the program's abstract syntax tree (AST) or statements
-print("Parsed Program:")
-for statement in program.statements:
-    print(statement)
+        
+        return Procedure(name, body)
