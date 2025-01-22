@@ -2,20 +2,12 @@ import tokenizer
 import parser as par
 
 pseudocode = """
-PROCEDURE CalculateSum()
-    x <- 0
-    FOR i <- 1 TO 10 DO
-        IF i > 2 THEN
-            x <- x + i
-            PRINT "Adding even number: "
-            PRINT i
-        ELSE
-            PRINT "Skipping odd number: "
-            PRINT i
-        ENDIF
-    ENDFOR
-    RETURN x
+PROCEDURE CalculateSum(a, b)
+    result <- a + b
+    RETURN result
 ENDPROCEDURE
+x <- CalculateSum(3, 4)
+
 """
 
 tokens = tokenizer.tokenize(pseudocode)
@@ -29,6 +21,7 @@ parser = par.Parser(tokens)
 ast = parser.parse_program()
 
 # Print the AST (you can improve this for better readability)
-print("Parsed Program:")
+
+print("\nParsed Program:")
 for statement in ast.statements:
     print(statement)
