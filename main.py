@@ -2,10 +2,7 @@ import tokenizer
 import parser as par
 
 pseudocode = """
-PROCEDURE CalculateSum(a, b)
-    result <- a + b
-    RETURN result
-ENDPROCEDURE
+
 x <- CalculateSum(3, 4)
 
 """

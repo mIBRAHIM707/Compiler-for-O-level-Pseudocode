@@ -119,20 +119,26 @@ class Parser:
 
         if token[0] == "IDENTIFIER":
             print(f"Found IDENTIFIER: {token[1]}")  # Debugging print for IDENTIFIER
+            var_name = token[1]
 
-            if self.lookahead(1):
+            if self.lookahead(1):  # Look at the next token
                 next_token = self.lookahead(1)
                 print(f"Lookahead 1: {next_token}")  # Debugging print for the next token
 
-                # Check if the next token is a DELIMITER '(' indicating a procedure call
-                if next_token[0] == "DELIMITER" and next_token[1] == "(":
-                    print("Detected procedure call, parsing procedure call.")  # Debugging print
-                    return self.parse_procedure_call()
-
                 # Check if the next token is an ASSIGN_OP, indicating an assignment
-                elif next_token[0] == "ASSIGN_OP":
+                if next_token[0] == "ASSIGN_OP":
                     print("Detected assignment operation, parsing assignment.")  # Debugging print
-                    return self.parse_assignment()
+                    self.match("IDENTIFIER")  # Consume the variable name
+                    self.match("ASSIGN_OP")  # Consume the '<-'
+
+                    # Parse the right-hand side (could be an expression or procedure call)
+                    rhs = self.parse_expression()  # Assume parse_expression handles procedure calls
+                    return Assignment(var_name, rhs)
+
+                # Check if the next token is a DELIMITER '(' indicating a procedure call
+                elif next_token[0] == "DELIMITER" and next_token[1] == "(":
+                    print("Detected standalone procedure call, parsing procedure call.")  # Debugging print
+                    return self.parse_procedure_call()
 
             print("No assignment or procedure call detected, treating as standalone identifier.")  # Debugging print
             return IdentifierStatement(token[1])
@@ -165,9 +171,12 @@ class Parser:
             elif token[1] == "RETURN":
                 print("Parsing RETURN statement.")  # Debugging print
                 return self.parse_return()
+        
+        elif token[0] == "DELIMITER" and token[1] == "(":
+                    print("Detected standalone procedure call, parsing procedure call.")  # Debugging print
+                    return self.parse_procedure_call()
 
         raise SyntaxError(f"Unexpected token: {token}")
-
 
     def parse_assignment(self):
         # Parse the left-hand side identifier
@@ -188,14 +197,19 @@ class Parser:
         # Consume the ASSIGN_OP token
         self.match("ASSIGN_OP")
 
-        # Now, check if the next token is a DELIMITER '(' (i.e., a procedure call)
-        if self.lookahead(1) and self.lookahead(1)[0] == "DELIMITER" and self.lookahead(1)[1] == "(":
-            print(f"Detected procedure call for {identifier}, parsing procedure call.")  # Debugging print
-            return self.parse_procedure_call()
+        # Now, check if the right-hand side is a procedure call or a regular expression
+        next_token = self.current_token()
+        if next_token[0] == "IDENTIFIER":  # Potential procedure call
+            lookahead_token = self.lookahead(1)
+            if lookahead_token and lookahead_token[0] == "DELIMITER" and lookahead_token[1] == "(":
+                print(f"Detected procedure call for {identifier}, parsing procedure call.")  # Debugging print
+                procedure_call = self.parse_procedure_call()
+                return Assignment(identifier, procedure_call)
 
-        # Otherwise, it's a regular assignment, so parse the right-hand side expression
+        # Otherwise, parse the right-hand side as a regular expression
+        print(f"Parsing right-hand side expression for assignment to {identifier}.")  # Debugging print
         expression = self.parse_expression()
-        
+
         # Return the assignment statement
         return Assignment(identifier, expression)
 
@@ -315,14 +329,14 @@ class Parser:
     
     def parse_procedure_call(self):
         print("-----------------------------------------------------")
-        token = self.current_token()
-        print(f"Parsing procedure call: {token}")  # Debugging print
-        
+        print(f"Starting procedure call parsing. Current token: {self.current_token()}")  # Entry debug
+
         # Ensure the current token is an identifier (procedure name)
+        token = self.current_token()
         if token[0] != "IDENTIFIER":
             raise SyntaxError(f"Expected an identifier, but got {token}")
-        
         procedure_name = token[1]
+        print(f"Procedure name: {procedure_name}")
         self.match("IDENTIFIER")  # Consume the identifier
 
         # Now expect an opening parenthesis '('
@@ -330,24 +344,31 @@ class Parser:
         if token[0] != "DELIMITER" or token[1] != "(":
             raise SyntaxError(f"Expected '(', but got {token}")
         self.match("DELIMITER")  # Consume the '('
+        print(f"Opening parenthesis detected. Current token: {self.current_token()}")
 
         # Parse arguments inside the parentheses (if any)
         arguments = []
-        token = self.current_token()
-        if token[0] != "DELIMITER" or token[1] != ")":
-            arguments.append(self.parse_expression())  # Assuming there's an expression parser for arguments
-            while token[0] == "DELIMITER" and token[1] == ",":
+        while True:
+            token = self.current_token()
+            if token[0] == "DELIMITER" and token[1] == ")":
+                break  # End of arguments
+            print(f"Parsing argument. Current token: {token}")
+            arguments.append(self.parse_expression())  # Parse argument
+            
+            token = self.current_token()
+            if token[0] == "DELIMITER" and token[1] == ",":
                 self.match("DELIMITER")  # Consume the comma
-                arguments.append(self.parse_expression())  # Parse more arguments if any
-                token = self.current_token()
+                print(f"Comma detected. Continuing to next argument.")
+            elif token[0] == "DELIMITER" and token[1] == ")":
+                break
+            else:
+                raise SyntaxError(f"Unexpected token while parsing arguments: {token}")
 
         # Closing parenthesis
+        token = self.current_token()
         if token[0] != "DELIMITER" or token[1] != ")":
             raise SyntaxError(f"Expected ')', but got {token}")
         self.match("DELIMITER")  # Consume the ')'
+        print(f"Closing parenthesis detected. Procedure call parsing complete.")
 
         return ProcedureCall(procedure_name, arguments)
-
-
-
-
