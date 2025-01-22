@@ -103,7 +103,8 @@ class Parser:
             if token[0] == "KEYWORD" and token[1] == "ENDPROCEDURE":
                 break  # End the procedure parsing
             statements.append(self.parse_statement())
-        return statements
+        return Program(statements)  # Wrap in Program object
+
 
 
     def parse_statement(self):
@@ -241,16 +242,27 @@ class Parser:
         return CallStatement(procedure_name, args)
     
     def parse_procedure(self):
+        print(f"Parsing procedure, current token: {self.current_token()}")
+
         self.match("KEYWORD")  # Match PROCEDURE
-        name = self.match("IDENTIFIER")[1]  # Match the procedure name (e.g., CalculateSum)
+        name_token = self.match("IDENTIFIER")  # Match procedure name
+        name = name_token[1]  # Extract the procedure name
+
         self.match("DELIMITER")  # Match '('
+        params = []
+        while self.current_token()[0] == "IDENTIFIER":  # Collect parameters
+            params.append(self.match("IDENTIFIER")[1])
+            if self.current_token()[1] == ",":
+                self.match("DELIMITER")  # Match ',' if more params
+
         self.match("DELIMITER")  # Match ')'
-        
-        # Parse procedure parameters or just continue if none
-        self.match("KEYWORD")  # Match FOR (if applicable)
-        
-        body = self.parse_program()  # Parse the procedure body
-        
+
+        body = []
+        while self.current_token() and self.current_token()[1] != "ENDPROCEDURE":
+            body.append(self.parse_statement())
+
         self.match("KEYWORD")  # Match ENDPROCEDURE
-        
-        return Procedure(name, body)
+
+        return ProcedureDefinition(name, params, body)
+
+

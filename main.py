@@ -16,11 +16,6 @@ PROCEDURE CalculateSum()
     ENDFOR
     RETURN x
 ENDPROCEDURE
-
-y <- CalculateSum()
-PRINT "Total sum is: "
-PRINT y
-
 """
 
 tokens = tokenizer.tokenize(pseudocode)
