@@ -81,6 +81,37 @@ class IdentifierStatement:
         return f"IdentifierStatement(identifier={self.identifier})"
 
 
+class Expression:
+    """Base class for all expressions."""
+    pass
+
+class Literal(Expression):
+    """Represents a literal value (e.g., numbers or strings)."""
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return f"Literal({repr(self.value)})"
+
+class Variable(Expression):
+    """Represents a variable (identifier)."""
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return f"Variable({self.name})"
+
+class BinaryOperation(Expression):
+    """Represents a binary operation (e.g., addition, subtraction)."""
+    def __init__(self, left, operator, right):
+        self.left = left
+        self.operator = operator
+        self.right = right
+
+    def __repr__(self):
+        return f"BinaryOperation({self.left} {self.operator} {self.right})"
+
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -172,9 +203,9 @@ class Parser:
                 print("Parsing RETURN statement.")  # Debugging print
                 return self.parse_return()
         
-        elif token[0] == "DELIMITER" and token[1] == "(":
-                    print("Detected standalone procedure call, parsing procedure call.")  # Debugging print
-                    return self.parse_procedure_call()
+        # elif token[0] == "DELIMITER" and token[1] == "(":
+        #             print("Detected standalone procefffffffdure call, parsing procedure call.")  # Debugging print
+        #             return self.parse_procedure_call()
 
         raise SyntaxError(f"Unexpected token: {token}")
 
@@ -252,15 +283,50 @@ class Parser:
         return Loop(identifier, start, end, Program(body))  # Return loop with body
 
     def parse_expression(self):
-        left = self.parse_term()
-        while self.current_token() and self.current_token()[0] in ("REL_OP", "OPERATOR"):
-            operator = self.current_token()[1]
-            self.match(self.current_token()[0])  # Match operator
-            right = self.parse_term()
-            left = (operator, left, right)  # Build a binary operation tree
-        return left
+        """Parses an expression."""
+        token = self.current_token()
+        print(f"Parsing expression: {token}")  # Debugging print
+
+        if token[0] == "NUMBER":
+            # Handle literal numbers
+            self.match("NUMBER")
+            return Literal(token[1])
+
+        elif token[0] == "STRING":
+            # Handle literal strings
+            self.match("STRING")
+            return Literal(token[1])
+
+        elif token[0] == "IDENTIFIER":
+            # Look ahead to check for a procedure call
+            if self.lookahead(1) and self.lookahead(1)[0] == "DELIMITER" and self.lookahead(1)[1] == "(":
+                print(f"Detected procedure call in expression: {token[1]}")
+                return self.parse_procedure_call()
+
+            # Otherwise, it's a variable
+            self.match("IDENTIFIER")
+            return Variable(token[1])
+
+        elif token[0] == "DELIMITER" and token[1] == "(":
+            # Handle parenthesized expressions
+            self.match("DELIMITER")
+            expr = self.parse_expression()
+            if self.current_token()[0] != "DELIMITER" or self.current_token()[1] != ")":
+                raise SyntaxError(f"Expected ')', but got {self.current_token()}")
+            self.match("DELIMITER")
+            return expr
+
+        elif token[0] in {"OPERATOR"}:
+            # Handle binary operations
+            left = self.parse_expression()
+            operator = token[1]
+            self.match("OPERATOR")
+            right = self.parse_expression()
+            return BinaryOperation(left, operator, right)
 
         raise SyntaxError(f"Unexpected token in expression: {token}")
+
+
 
     def lookahead(self, n):
         if self.position + n < len(self.tokens):
