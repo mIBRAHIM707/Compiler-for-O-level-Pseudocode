@@ -2,7 +2,7 @@ import tokenizer
 import parser as par
 
 pseudocode = """
-x <- CalculateSum(3, 4)
+x <- 3 + 4
 
 """
 

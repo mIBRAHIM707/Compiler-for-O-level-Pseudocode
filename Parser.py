@@ -148,6 +148,7 @@ class Parser:
         token = self.current_token()
         print(f"Parsing statement: {token}")  # Debugging print
 
+        # Handle IDENTIFIER cases (variable assignments or standalone identifiers)
         if token[0] == "IDENTIFIER":
             print(f"Found IDENTIFIER: {token[1]}")  # Debugging print for IDENTIFIER
             var_name = token[1]
@@ -158,21 +159,31 @@ class Parser:
 
                 # Check if the next token is an ASSIGN_OP, indicating an assignment
                 if next_token[0] == "ASSIGN_OP":
-                    print("Detected assignment operation, parsing assignment.")  # Debugging print
+                    print("Detected assignment operation, parsing arrssignment.")  # Debugging print
                     self.match("IDENTIFIER")  # Consume the variable name
+                    print("iden consumed")
                     self.match("ASSIGN_OP")  # Consume the '<-'
+                    print("ass op consumed")
 
                     # Parse the right-hand side (could be an expression or procedure call)
                     rhs = self.parse_expression()  # Assume parse_expression handles procedure calls
+                    print("rhs calculated")
                     return Assignment(var_name, rhs)
 
                 # Check if the next token is a DELIMITER '(' indicating a procedure call
                 elif next_token[0] == "DELIMITER" and next_token[1] == "(":
-                    print("Detected standalone procedure call, parsing procedure call.")  # Debugging print
+                    print("Detected procedure call, parsing procedure call.")  # Debugging print
                     return self.parse_procedure_call()
 
+            # If no assignment or procedure call detected, treat as a standalone identifier
             print("No assignment or procedure call detected, treating as standalone identifier.")  # Debugging print
-            return IdentifierStatement(token[1])
+            return IdentifierStatement(var_name)
+
+        # Handle expressions and operators (operator should be part of expressions, not standalone)
+        elif token[0] == "OPERATOR":
+            # Operators should be part of an expression; this shouldn't be a standalone statement.
+            print(f"Unexpected operator {token[1]} outside of expression.")  # Debugging print
+            raise SyntaxError(f"Unexpected token: {token}")
 
         # Handle other cases like IF, FOR, etc.
         elif token[0] == "KEYWORD":
@@ -202,12 +213,12 @@ class Parser:
             elif token[1] == "RETURN":
                 print("Parsing RETURN statement.")  # Debugging print
                 return self.parse_return()
-        
-        # elif token[0] == "DELIMITER" and token[1] == "(":
-        #             print("Detected standalone procefffffffdure call, parsing procedure call.")  # Debugging print
-        #             return self.parse_procedure_call()
 
+        # Catch other cases (e.g., invalid or unexpected tokens)
         raise SyntaxError(f"Unexpected token: {token}")
+
+
+
 
     def parse_assignment(self):
         # Parse the left-hand side identifier
@@ -283,32 +294,81 @@ class Parser:
         return Loop(identifier, start, end, Program(body))  # Return loop with body
 
     def parse_expression(self):
-        """Parses an expression."""
+        """Parses an expression, supporting precedence and associativity."""
         token = self.current_token()
-        print(f"Parsing expression: {token}")  # Debugging print
+        if token is None:  # Example of an early exit
+            print("No token available")
+            return None
+        print("About to call parse_term")
+        print(f"Current token before parse_term: {self.current_token()}")
+        left = self.parse_factor()
+
+        while self.current_token() is not None and self.current_token()[0] == "OPERATOR" and self.current_token()[1] in {"+", "-"}:
+            operator = self.current_token()[1]
+            print(f"Operator found: {operator}")  # Debugging print
+            self.match("OPERATOR")
+            print("Consuming operator")  # Debugging print
+            right = self.parse_factor()
+            left = BinaryOperation(left, operator, right)
+
+
+        return left
+
+
+    def parse_term(self):
+        """Parses terms (expressions with + and - operators)."""
+        print("------------")
+        left = self.parse_factor()
+
+        while self.current_token()[0] == "OPERATOR" and self.current_token()[1] in {"+", "-"}:
+            operator = self.current_token()[1]
+            self.match("OPERATOR")
+            print("consuming op")
+            right = self.parse_factor()
+            left = BinaryOperation(left, operator, right)
+
+        return left
+
+    def parse_factor(self):
+        """Parses factors (expressions with *, / operators)."""
+        left = self.parse_primary()
+        print("odjeiodje")
+        print(left)
+        print(self.current_token()[1])
+
+        while self.current_token()[0] == "OPERATOR" and self.current_token()[1] in {"*", "/"}:
+            operator = self.current_token()[1]
+            self.match("OPERATOR")
+            right = self.parse_primary()
+            left = BinaryOperation(left, operator, right)
+
+        return left
+
+    def parse_primary(self):
+        """Parses primary expressions like numbers, variables, or parenthesized expressions."""
+        token = self.current_token()
+        print("------")
+        print("90->" + self.current_token()[1])
 
         if token[0] == "NUMBER":
-            # Handle literal numbers
             self.match("NUMBER")
+            print("oooooo")
+            print(token[1])
             return Literal(token[1])
 
         elif token[0] == "STRING":
-            # Handle literal strings
             self.match("STRING")
             return Literal(token[1])
 
         elif token[0] == "IDENTIFIER":
             # Look ahead to check for a procedure call
             if self.lookahead(1) and self.lookahead(1)[0] == "DELIMITER" and self.lookahead(1)[1] == "(":
-                print(f"Detected procedure call in expression: {token[1]}")
                 return self.parse_procedure_call()
 
-            # Otherwise, it's a variable
             self.match("IDENTIFIER")
             return Variable(token[1])
 
         elif token[0] == "DELIMITER" and token[1] == "(":
-            # Handle parenthesized expressions
             self.match("DELIMITER")
             expr = self.parse_expression()
             if self.current_token()[0] != "DELIMITER" or self.current_token()[1] != ")":
@@ -316,15 +376,8 @@ class Parser:
             self.match("DELIMITER")
             return expr
 
-        elif token[0] in {"OPERATOR"}:
-            # Handle binary operations
-            left = self.parse_expression()
-            operator = token[1]
-            self.match("OPERATOR")
-            right = self.parse_expression()
-            return BinaryOperation(left, operator, right)
+        raise SyntaxError(f"Unexpected token in primary expression: {token}")
 
-        raise SyntaxError(f"Unexpected token in expression: {token}")
 
 
 
