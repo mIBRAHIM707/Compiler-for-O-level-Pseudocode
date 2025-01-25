@@ -92,7 +92,13 @@ class Expression:
 class Literal(Expression):
     """Represents a literal value (e.g., numbers or strings)."""
     def __init__(self, value):
-        self.value = value
+        try:
+            self.value = int(value)
+        except ValueError:
+            try:
+                self.value = float(value)
+            except ValueError:
+                self.value = value
 
     def __repr__(self):
         return f"Literal({repr(self.value)})"
