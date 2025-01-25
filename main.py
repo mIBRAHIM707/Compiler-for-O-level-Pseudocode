@@ -1,23 +1,27 @@
 import tokenizer
 import parser as par
+from SemanticAnalyzer import SemanticAnalyzer
+from CodeGenerator import CodeGenerator
 
 pseudocode = """
-x <- 3 - 4
-
+x <- 5
+IF x > 0 THEN
+  PRINT "Positive"
+ENDIF
 """
 
 tokens = tokenizer.tokenize(pseudocode)
-# try:
-#     for token in tokens:
-#         print(token)
-# except SyntaxError as e:
-#     print(f"Error: {e}")
-
 parser = par.Parser(tokens)
 ast = parser.parse_program()
 
-# Print the AST (you can improve this for better readability)
+# Perform semantic analysis
+analyzer = SemanticAnalyzer()
+analyzer.analyze(ast)
 
-print("\nParsed Program:")
-for statement in ast.statements:
-    print(statement)
+# Generate target code
+generator = CodeGenerator()
+generator.generate(ast)
+target_code = generator.get_code()
+
+print("\nGenerated Code:")
+print(target_code)

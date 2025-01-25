@@ -1,5 +1,3 @@
-import AST_Tree as a
-
 class Program:
     def __init__(self, statements):
         self.statements = statements
@@ -284,9 +282,9 @@ class Parser:
 
     def parse_expression(self):
         left = self.parse_primary()
-        while self.current_token() and self.current_token()[0] == "OPERATOR":
+        while self.current_token() and self.current_token()[0] in ("OPERATOR", "REL_OP"):
             op_token = self.current_token()
-            self.match("OPERATOR")
+            self.advance()  # match() not strictly necessary here, but we skip the operator token
             right = self.parse_primary()
             left = BinaryOperation(left, op_token[1], right)
         return left
