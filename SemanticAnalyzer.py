@@ -4,13 +4,16 @@ class SemanticAnalyzer:
     def __init__(self):
         self.symbol_table = {}
 
+    def declare_variable(self, name, var_type=None):
+        self.symbol_table[name] = var_type
+
     def analyze(self, node):
         if isinstance(node, Program):
             for statement in node.statements:
                 self.analyze(statement)
         elif isinstance(node, Assignment):
             self.analyze(node.expression)
-            self.symbol_table[node.identifier] = self.get_type(node.expression)
+            self.declare_variable(node.identifier, self.get_type(node.expression))
         elif isinstance(node, Conditional):
             self.analyze(node.condition)
             for stmt in node.true_branch:
@@ -21,6 +24,11 @@ class SemanticAnalyzer:
         elif isinstance(node, Loop):
             self.analyze(node.start)
             self.analyze(node.end)
+            start_type = self.get_type(node.start)
+            end_type = self.get_type(node.end)
+            if start_type != end_type:
+                raise TypeError("Type mismatch in loop range")
+            self.declare_variable(node.identifier, start_type)  # Declare the loop variable with the type of the start expression
             for stmt in node.body.statements:
                 self.analyze(stmt)
         elif isinstance(node, PrintStatement):
@@ -31,6 +39,8 @@ class SemanticAnalyzer:
             for arg in node.args:
                 self.analyze(arg)
         elif isinstance(node, ProcedureDefinition):
+            for param in node.params:
+                self.symbol_table[param] = None  # Add parameters to the symbol table
             for stmt in node.body:
                 self.analyze(stmt)
         elif isinstance(node, ProcedureCall):

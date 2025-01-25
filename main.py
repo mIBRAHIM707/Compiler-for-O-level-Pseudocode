@@ -4,10 +4,7 @@ from SemanticAnalyzer import SemanticAnalyzer
 from CodeGenerator import CodeGenerator
 
 pseudocode = """
-x <- 5
-IF x > 0 THEN
-  PRINT "Positive"
-ENDIF
+x <- (3 + 2
 """
 
 tokens = tokenizer.tokenize(pseudocode)

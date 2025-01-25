@@ -78,6 +78,12 @@ class IdentifierStatement:
     def __repr__(self):
         return f"IdentifierStatement(identifier={self.identifier})"
 
+class ReadStatement:
+    def __init__(self, identifier):
+        self.identifier = identifier
+
+    def __repr__(self):
+        return f"Read({self.identifier})"
 
 class Expression:
     """Base class for all expressions."""
@@ -139,6 +145,9 @@ class Parser:
             token = self.current_token()
             if token[0] == "KEYWORD" and token[1] == "ENDPROCEDURE":
                 break  # End the procedure parsing
+            if token[0] == "COMMENT":
+                self.advance()  # Skip comments
+                continue
             statements.append(self.parse_statement())
         return Program(statements)  # Wrap in Program object
 
@@ -317,7 +326,7 @@ class Parser:
             # Handle parenthesized expressions
             self.match("DELIMITER")
             expr = self.parse_expression()
-            if self.current_token()[0] != "DELIMITER" or self.current_token()[1] != ")":
+            if self.current_token() is None or self.current_token()[0] != "DELIMITER" or self.current_token()[1] != ")":
                 raise SyntaxError(f"Expected ')', but got {self.current_token()}")
             self.match("DELIMITER")
             return expr
@@ -434,3 +443,8 @@ class Parser:
         print(f"Closing parenthesis detected. Procedure call parsing complete.")
 
         return ProcedureCall(procedure_name, arguments)
+
+    def parse_read(self):
+        self.match("KEYWORD")  # Match READ
+        identifier = self.match("IDENTIFIER")[1]  # Match the identifier to read into
+        return ReadStatement(identifier)
