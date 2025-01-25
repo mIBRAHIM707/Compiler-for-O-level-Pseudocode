@@ -27,7 +27,7 @@ class SemanticAnalyzer:
             start_type = self.get_type(node.start)
             end_type = self.get_type(node.end)
             if start_type != end_type:
-                raise TypeError("Type mismatch in loop range")
+                raise TypeError(f"Type mismatch in loop range: {start_type} and {end_type}")
             self.declare_variable(node.identifier, start_type)
             for stmt in node.body.statements:
                 self.analyze(stmt)
@@ -59,11 +59,14 @@ class SemanticAnalyzer:
         if isinstance(node, Literal):
             return type(node.value)
         elif isinstance(node, Variable):
-            return self.symbol_table.get(node.name, None)
+            var_type = self.symbol_table.get(node.name, None)
+            if var_type is None:
+                raise NameError(f"Variable {node.name} not declared")
+            return var_type
         elif isinstance(node, BinaryOperation):
             left_type = self.get_type(node.left)
             right_type = self.get_type(node.right)
             if left_type != right_type:
-                raise TypeError("Type mismatch in binary operation")
+                raise TypeError(f"Type mismatch in binary operation: {left_type} and {right_type}")
             return left_type
         return None

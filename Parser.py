@@ -137,7 +137,7 @@ class Parser:
             self.advance()
             return token
         else:
-            raise SyntaxError(f"Expected {expected_type}, found {self.current_token()}")
+            raise SyntaxError(f"Expected {expected_type}, found {self.current_token()} at position {self.position}")
 
     def parse_program(self):
         statements = []
@@ -189,18 +189,18 @@ class Parser:
             elif token[1] == "RETURN":
                 return self.parse_return()
 
-        raise SyntaxError(f"Unexpected token: {token}")
+        raise SyntaxError(f"Unexpected token: {token} at position {self.position}")
 
     def parse_assignment(self):
         left_token = self.current_token()
         if left_token[0] != "IDENTIFIER":
-            raise SyntaxError(f"Expected identifier, found {left_token}")
+            raise SyntaxError(f"Expected identifier, found {left_token} at position {self.position}")
 
         identifier = left_token[1]
         self.match("IDENTIFIER")
         assign_op_token = self.current_token()
         if assign_op_token[0] != "ASSIGN_OP" or assign_op_token[1] != "<-":
-            raise SyntaxError(f"Expected assignment operator, found {assign_op_token}")
+            raise SyntaxError(f"Expected assignment operator, found {assign_op_token} at position {self.position}")
         self.match("ASSIGN_OP")
         next_token = self.current_token()
         if next_token[0] == "IDENTIFIER":
@@ -272,11 +272,11 @@ class Parser:
             self.match("DELIMITER")
             expr = self.parse_expression()
             if self.current_token() is None or self.current_token()[0] != "DELIMITER" or self.current_token()[1] != ")":
-                raise SyntaxError(f"Expected ')', but got {self.current_token()}")
+                raise SyntaxError(f"Expected ')', but got {self.current_token()} at position {self.position}")
             self.match("DELIMITER")
             return expr
 
-        raise SyntaxError(f"Unexpected token in primary: {token}")
+        raise SyntaxError(f"Unexpected token in primary: {token} at position {self.position}")
 
     def lookahead(self, n):
         if self.position + n < len(self.tokens):
@@ -298,7 +298,7 @@ class Parser:
             expr = self.parse_expression()
             self.match("DELIMITER")
             return expr
-        raise SyntaxError(f"Unexpected token in term: {token}")
+        raise SyntaxError(f"Unexpected token in term: {token} at position {self.position}")
     
     def parse_return(self):
         self.match("KEYWORD")
@@ -338,12 +338,12 @@ class Parser:
     def parse_procedure_call(self):
         token = self.current_token()
         if token[0] != "IDENTIFIER":
-            raise SyntaxError(f"Expected an identifier, but got {token}")
+            raise SyntaxError(f"Expected an identifier, but got {token} at position {self.position}")
         procedure_name = token[1]
         self.match("IDENTIFIER")
         token = self.current_token()
         if token[0] != "DELIMITER" or token[1] != "(":
-            raise SyntaxError(f"Expected '(', but got {token}")
+            raise SyntaxError(f"Expected '(', but got {token} at position {self.position}")
         self.match("DELIMITER")
         arguments = []
         while True:
@@ -357,10 +357,10 @@ class Parser:
             elif token[0] == "DELIMITER" and token[1] == ")":
                 break
             else:
-                raise SyntaxError(f"Unexpected token while parsing arguments: {token}")
+                raise SyntaxError(f"Unexpected token while parsing arguments: {token} at position {self.position}")
         token = self.current_token()
         if token[0] != "DELIMITER" or token[1] != ")":
-            raise SyntaxError(f"Expected ')', but got {token}")
+            raise SyntaxError(f"Expected ')', but got {token} at position {self.position}")
         self.match("DELIMITER")
         return ProcedureCall(procedure_name, arguments)
 

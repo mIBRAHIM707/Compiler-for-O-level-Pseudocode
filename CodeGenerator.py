@@ -74,6 +74,8 @@ class CodeGenerator:
             self.code.append(str(node.value))
         elif isinstance(node, ReadStatement):
             self.code.append(f"{self.indent()}{node.identifier} = input()")
+        else:
+            raise TypeError(f"Unknown node type: {type(node)}")
 
     def get_code(self):
         return "\n".join(self.code)

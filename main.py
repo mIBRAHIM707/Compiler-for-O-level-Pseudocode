@@ -2,7 +2,7 @@ import tokenizer
 import parser as par
 from SemanticAnalyzer import SemanticAnalyzer
 from CodeGenerator import CodeGenerator
-from optimizer import Optimizer
+from Optimizer import Optimizer
 
 pseudocode = """
 x <- 10
@@ -40,19 +40,24 @@ ENDPROCEDURE
 x <- square(5)
 """
 
-tokens = tokenizer.tokenize(pseudocode)
-parser = par.Parser(tokens)
-ast = parser.parse_program()
+try:
+    tokens = tokenizer.tokenize(pseudocode)
+    parser = par.Parser(tokens)
+    ast = parser.parse_program()
 
-analyzer = SemanticAnalyzer()
-analyzer.analyze(ast)
+    analyzer = SemanticAnalyzer()
+    analyzer.analyze(ast)
 
-optimizer = Optimizer()
-optimized_ast = optimizer.optimize(ast)
+    optimizer = Optimizer()
+    optimized_ast = optimizer.optimize(ast)
 
-generator = CodeGenerator()
-generator.generate(optimized_ast)
-target_code = generator.get_code()
+    generator = CodeGenerator()
+    generator.generate(optimized_ast)
+    target_code = generator.get_code()
 
-print("\nGenerated Code:")
-print(target_code)
+    print("\nGenerated Code:")
+    print(target_code)
+except SyntaxError:
+    print("Syntax error in the pseudocode.")
+except Exception as e:
+    print(f"An error occurred: {e}")
