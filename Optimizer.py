@@ -37,7 +37,6 @@ class Optimizer:
             optimized_left = self.optimize(node.left)
             optimized_right = self.optimize(node.right)
             if isinstance(optimized_left, Literal) and isinstance(optimized_right, Literal):
-                # Perform constant folding
                 if node.operator == '+':
                     return Literal(optimized_left.value + optimized_right.value)
                 elif node.operator == '-':

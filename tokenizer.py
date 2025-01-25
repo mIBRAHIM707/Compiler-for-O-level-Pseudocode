@@ -12,10 +12,10 @@ def tokenize(pseudocode):
                 regex = re.compile(pattern)
                 match = regex.match(line, position)
                 if match:
-                    if token_type != "WHITESPACE":  # Ignore whitespace
+                    if token_type != "WHITESPACE":
                         tokens.append((token_type, match.group(0)))
                     position = match.end()
                     break
-            if not match:  # If no token matches
+            if not match:
                 raise SyntaxError(f"Unknown token at line {lineNumber}, position {position}: {line[position]}")
     return tokens

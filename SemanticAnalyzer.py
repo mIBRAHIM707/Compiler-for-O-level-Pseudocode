@@ -28,7 +28,7 @@ class SemanticAnalyzer:
             end_type = self.get_type(node.end)
             if start_type != end_type:
                 raise TypeError("Type mismatch in loop range")
-            self.declare_variable(node.identifier, start_type)  # Declare the loop variable with the type of the start expression
+            self.declare_variable(node.identifier, start_type)
             for stmt in node.body.statements:
                 self.analyze(stmt)
         elif isinstance(node, PrintStatement):
@@ -40,7 +40,7 @@ class SemanticAnalyzer:
                 self.analyze(arg)
         elif isinstance(node, ProcedureDefinition):
             for param in node.params:
-                self.symbol_table[param] = None  # Add parameters to the symbol table
+                self.symbol_table[param] = None
             for stmt in node.body:
                 self.analyze(stmt)
         elif isinstance(node, ProcedureCall):

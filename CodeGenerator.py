@@ -17,7 +17,10 @@ class CodeGenerator:
             self.code.append(f"{self.indent()}{node.identifier} = {self.code.pop()}")
         elif isinstance(node, Conditional):
             self.generate(node.condition)
-            self.code.append(f"{self.indent()}if {self.code.pop()}:")
+            condition_code = self.code.pop()
+            if " = " in condition_code:
+                condition_code = condition_code.replace(" = ", " == ")
+            self.code.append(f"{self.indent()}if {condition_code}:")
             self.indent_level += 1
             for stmt in node.true_branch:
                 self.generate(stmt)
