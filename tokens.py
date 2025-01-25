@@ -11,5 +11,4 @@ TOKEN_PATTERNS = [
     ("IDENTIFIER", r"\b[A-Za-z_][A-Za-z0-9_]*\b"),  # Matches variable/procedure names
     ("WHITESPACE", r"\s+"),  # Matches spaces and tabs
     ("COMMENT", r"#.*"),  # Matches comments starting with #
-    # ("UNKNOWN", r".")  # Optional: Matches any unknown character
 ]
