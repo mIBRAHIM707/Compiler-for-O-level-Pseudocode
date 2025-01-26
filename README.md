@@ -28,44 +28,17 @@ The code generator converts the optimized AST into executable Python code. It ha
 
 To use the compiler, follow these steps:
 
-1. **Write Pseudocode**: Write your pseudocode in the `pseudocode` variable in the `main.py` file.
+1. **Write Pseudocode**: Write your pseudocode in a `.psc` file.
 
-2. **Run the Compiler**: Execute the `main.py` file to tokenize, parse, analyze, optimize, and generate Python code from the pseudocode.
+2. **Run the Compiler**: Execute the `main.py` file with the path to the `.psc` file as a command-line argument to tokenize, parse, analyze, optimize, and generate Python code from the pseudocode.
 
-3. **View Generated Code**: The generated Python code will be printed to the console.
+3. **View and Execute Generated Code**: The generated Python code will be written to a file named `generatedCode.py` and executed automatically.
 
 ## Example
 
 Here is an example pseudocode:
 
 ```plaintext
-x <- 10
-y <- 10 + 20 - 5
-IF x > 0 THEN
-  z <- 1
-ENDIF
-IF x = 0 THEN
-  z <- 1
-ELSE
-  z <- 0
-ENDIF
-FOR i <- 1 TO 5 DO
-  x <- x + i
-ENDFOR
-PRINT x
-PROCEDURE add(a, b)
-  RETURN a + b
-ENDPROCEDURE
-x <- add(3, 4)
-IF x > 0 THEN
-  IF y > 0 THEN
-    z <- 1
-  ELSE
-    z <- 2
-  ENDIF
-ELSE
-  z <- 3
-ENDIF
 x <- (3 + 2) * (7 - 4)
 READ x
 PROCEDURE square(n)
@@ -77,27 +50,6 @@ x <- square(5)
 The generated Python code will be:
 
 ```python
-x = 10
-y = 25
-if (x > 0):
-    z = 1
-if (x == 0):
-    z = 1
-else:
-    z = 0
-for i in range(1, 5 + 1):
-    x = (x + i)
-print(x)
-def add(a, b):
-    return (a + b)
-x = add(3, 4)
-if (x > 0):
-    if (y > 0):
-        z = 1
-    else:
-        z = 2
-else:
-    z = 3
 x = 15
 x = input()
 def square(n):
@@ -105,10 +57,19 @@ def square(n):
 x = square(5)
 ```
 
+## Running the Compiler
+
+To run the compiler, use the following command:
+
+```sh
+python3 srcFiles/main.py example.psc
+```
+
+Replace `example.psc` with the path to your `.psc` file.
+
 ## Files
 
-- `tokens.py`: Defines the token patterns for the tokenizer.
-- `tokenizer.py`: Implements the tokenizer to convert pseudocode into tokens.
+- `Tokenizer.py`: Defines the token patterns for the tokenizer and Implements the tokenizer to convert pseudocode into tokens.
 - `Parser.py`: Implements the parser to convert tokens into an AST.
 - `SemanticAnalyzer.py`: Implements the semantic analyzer to check for semantic errors.
 - `Optimizer.py`: Implements the optimizer to perform various optimizations on the AST.
@@ -126,4 +87,4 @@ x = square(5)
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
