@@ -3,61 +3,40 @@ import parser as par
 from SemanticAnalyzer import SemanticAnalyzer
 from CodeGenerator import CodeGenerator
 from Optimizer import Optimizer
+import os
 
-pseudocode = """
-x <- 10
-y <- 10 + 20 - 5
-IF x > 0 THEN
-  z <- 1
-ENDIF
-IF x = 0 THEN
-  z <- 1
-ELSE
-  z <- 0
-ENDIF
-FOR i <- 1 TO 5 DO
-  x <- x + i
-ENDFOR
-PRINT x
-PROCEDURE add(a, b)
-  RETURN a + b
-ENDPROCEDURE
-x <- add(3, 4)
-IF x > 0 THEN
-  IF y > 0 THEN
-    z <- 1
-  ELSE
-    z <- 2
-  ENDIF
-ELSE
-  z <- 3
-ENDIF
-x <- (3 + 2) * (7 - 4)
-READ x
-PROCEDURE square(n)
-  RETURN n * n
-ENDPROCEDURE
-x <- square(5)
-"""
+def read_pseudocode(file_path):
+    with open(file_path, 'r') as file:
+        return file.read()
 
-try:
-    tokens = tokenizer.tokenize(pseudocode)
-    parser = par.Parser(tokens)
-    ast = parser.parse_program()
+def main():
+    pseudocode_file = input("Enter the path to the pseudocode (.psc) file: ")
+    pseudocode = read_pseudocode(pseudocode_file)
 
-    analyzer = SemanticAnalyzer()
-    analyzer.analyze(ast)
+    try:
+        tokens = tokenizer.tokenize(pseudocode)
+        parser = par.Parser(tokens)
+        ast = parser.parse_program()
 
-    optimizer = Optimizer()
-    optimized_ast = optimizer.optimize(ast)
+        analyzer = SemanticAnalyzer()
+        analyzer.analyze(ast)
 
-    generator = CodeGenerator()
-    generator.generate(optimized_ast)
-    target_code = generator.get_code()
+        optimizer = Optimizer()
+        optimized_ast = optimizer.optimize(ast)
 
-    print("\nGenerated Code:")
-    print(target_code)
-except SyntaxError:
-    print("Syntax error in the pseudocode.")
-except Exception as e:
-    print(f"An error occurred: {e}")
+        generator = CodeGenerator()
+        generator.generate(optimized_ast)
+        target_code = generator.get_code()
+
+        with open("generatedCode.py", "w") as code_file:
+            code_file.write(target_code)
+
+        os.system("python3 generatedCode.py")
+
+    except SyntaxError:
+        print("Syntax error in the pseudocode.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    main()
