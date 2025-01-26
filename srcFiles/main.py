@@ -1,17 +1,25 @@
-import tokenizer
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), 'srcFiles'))
+
+import argparse
+import Tokenizer as tokenizer
 import parser as par
 from SemanticAnalyzer import SemanticAnalyzer
 from CodeGenerator import CodeGenerator
 from Optimizer import Optimizer
-import os
 
 def read_pseudocode(file_path):
     with open(file_path, 'r') as file:
         return file.read()
 
 def main():
-    pseudocode_file = input("Enter the path to the pseudocode (.psc) file: ")
-    pseudocode = read_pseudocode(pseudocode_file)
+    parser = argparse.ArgumentParser(description="O-Level Pseudocode Compiler")
+    parser.add_argument("pseudocode_file", help="Path to the pseudocode (.psc) file")
+    args = parser.parse_args()
+
+    pseudocode = read_pseudocode(args.pseudocode_file)
 
     try:
         tokens = tokenizer.tokenize(pseudocode)
